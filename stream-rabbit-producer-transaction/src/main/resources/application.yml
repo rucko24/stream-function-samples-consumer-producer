@@ -6,12 +6,11 @@ spring:
       bindings:
         producer-in-0: # Canal de entrada (Consumidor)
           destination: my-queue
-          group: my-group
         producer-out-0: # Canal de salida (Productor)
           destination: my-queue
       rabbit:
         #bindings:
-          #producer-in-0:
-          #  consumer:
-          #    concurrency: 5 # Número de consumidores concurrentes
-          #    maxConcurrency: 10 # Máximo de consumidores concurrentes
+        #  producer-in-0:
+        #    consumer:
+        #      concurrency: 2 # Número de consumidores concurrentes
+        #      maxConcurrency: 3 # Máximo de consumidores concurrentes

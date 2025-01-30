@@ -17,7 +17,9 @@ package oz.stream;
 
 import java.util.function.Consumer;
 
+import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +42,9 @@ public class Uppercase implements Consumer<String> {
 	public void accept(String input) {
 		System.out.println("Uppercasing " + input);
 		this.streamBridge.send("my-queue", input);
-		if (input.equals("fail")) {
+
+
+        if (input.equals("fail")) {
 			System.out.println("throwing exception");
 			throw new RuntimeException("Itentional");
 		}

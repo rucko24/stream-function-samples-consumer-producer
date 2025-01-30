@@ -1,0 +1,17 @@
+spring:
+  cloud:
+    function:
+      definition: producer
+    stream:
+      bindings:
+        producer-in-0: # Canal de entrada (Consumidor)
+          destination: my-queue
+          group: my-group
+        producer-out-0: # Canal de salida (Productor)
+          destination: my-queue
+      rabbit:
+        #bindings:
+          #producer-in-0:
+          #  consumer:
+          #    concurrency: 5 # Número de consumidores concurrentes
+          #    maxConcurrency: 10 # Máximo de consumidores concurrentes

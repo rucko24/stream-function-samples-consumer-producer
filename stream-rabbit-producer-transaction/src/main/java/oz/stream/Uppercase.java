@@ -39,7 +39,7 @@ public class Uppercase implements Consumer<String> {
 	@Transactional
 	public void accept(String input) {
 		System.out.println("Uppercasing " + input);
-		this.streamBridge.send("uppercase-out", input.toUpperCase());
+		this.streamBridge.send("my-queue", input);
 		if (input.equals("fail")) {
 			System.out.println("throwing exception");
 			throw new RuntimeException("Itentional");

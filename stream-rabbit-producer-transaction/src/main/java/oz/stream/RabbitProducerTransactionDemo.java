@@ -17,6 +17,7 @@ package oz.stream;
 
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +35,12 @@ public class RabbitProducerTransactionDemo {
 	}
 
 	@Bean
-    public RabbitTransactionManager transactionManager(ConnectionFactory cf) {
-        return new RabbitTransactionManager(cf);
-    }
+	public CommandLineRunner run(Uppercase uppercase) {
+		return (args) -> {
+			for(int index=0; index<10; index++) {
+				uppercase.accept("Enviando mensaje de prueba");
+			}
+		};
+	}
+
 }

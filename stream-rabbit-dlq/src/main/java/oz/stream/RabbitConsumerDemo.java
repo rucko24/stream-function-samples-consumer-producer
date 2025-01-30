@@ -15,13 +15,8 @@
  */
 package oz.stream;
 
-import java.util.function.Function;
-
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 
 /**
  *
@@ -29,34 +24,10 @@ import org.springframework.context.annotation.Bean;
  *
  */
 @SpringBootApplication
-public class RabbitProducerTransactionDemo {
+public class RabbitConsumerDemo {
 
 	public static void main(String[] args) {
-		SpringApplication.run(RabbitProducerTransactionDemo.class, args);
+		SpringApplication.run(RabbitConsumerDemo.class, args);
 	}
 
-	@Bean
-	public Function<String, String> uppercase() {
-		return v -> {
-			if (v.equals("oleg")) {
-				throw new RuntimeException("Intentional");
-			}
-			return v.toUpperCase();
-		};
-	}
-
-	@Bean
-	public Function<String, String> lowercase() {
-		return v -> {
-			if (v.equals("oleg")) {
-				throw new RuntimeException("Intentional");
-			}
-			return v.toUpperCase();
-		};
-	}
-
-//	@Bean
-//    public RabbitTransactionManager transactionManager(ConnectionFactory cf) {
-//        return new RabbitTransactionManager(cf);
-//    }
 }

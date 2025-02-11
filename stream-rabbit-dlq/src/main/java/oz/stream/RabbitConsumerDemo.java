@@ -19,15 +19,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- *
  * @author Oleg Zhurakousky
- *
  */
 @SpringBootApplication
 public class RabbitConsumerDemo {
 
-	public static void main(String[] args) {
-		SpringApplication.run(RabbitConsumerDemo.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(RabbitConsumerDemo.class, args);
+    }
 
 }

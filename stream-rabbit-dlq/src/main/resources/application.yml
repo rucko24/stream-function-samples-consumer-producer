@@ -3,23 +3,34 @@ spring:
     function:
       definition: consumer
     stream:
+      default-binder: rabbit
+      binders:
+        rabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: ${URL_RABBIT}
+                port: 5672
+                username: ${USER}
+                password: ${PASSWORD}
       bindings:
         consumer-in-0:  # Canal de entrada (Consumidor)
-          destination: my-queue
-          group: my-test-group
+          destination: performance-queue
+          group: my-consumer-group
           consumer:
-            concurrency: 10 # Número de consumidores concurrentes
-            prefetch: 20
-        consumer-out-0: # Canal de salida (Productor)
-          destination: my-queue
+            concurrency: 10 # Nï¿½mero de consumidores concurrentes
+            prefetch: 1
+#        consumer-out-0: # Canal de salida (Productor)
+          #destination: performance-queue
           #consumer:
-          #  concurrency: 2 # Número de consumidores concurrentes
-          #  maxConcurrency: 2 # Máximo de consumidores concurrentes
+          #  concurrency: 2 # Nï¿½mero de consumidores concurrentes
+          #  maxConcurrency: 2 # Mï¿½ximo de consumidores concurrentes
           #  prefetch: 20
-      #rabbit:
-      #  bindings:
-      #    consumer-in-0:
-      #      consumer:
-      #        concurrency: 2 # Número de consumidores concurrentes
-      #        maxConcurrency: 2 # Máximo de consumidores concurrentes
-      #        prefetch: 20
+#    rabbit:
+#      bindings:
+#        log:
+#          consumer:
+#            autoBindDlq: false
+#            republishToDlq: false
+#            transacted: true

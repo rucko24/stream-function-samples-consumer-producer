@@ -3,14 +3,24 @@ spring:
     function:
       definition: producer
     stream:
+      default-binder: rabbit
+      binders:
+        rabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: ${URL_RABBIT}
+                port: 5672
+                username: ${USER}
+                password: ${PASSWORD}
       bindings:
         producer-in-0: # Canal de entrada (Consumidor)
-          destination: my-queue
-        producer-out-0: # Canal de salida (Productor)
-          destination: my-queue
-      rabbit:
-        #bindings:
-        #  producer-in-0:
-        #    consumer:
-        #      concurrency: 2 # Número de consumidores concurrentes
-        #      maxConcurrency: 3 # Máximo de consumidores concurrentes
+          destination: performance-queue
+#          concurrency: 4
+#          maxConcurrency: 5
+#        producer-out-0: # Canal de entrada (Consumidor)
+#          destination: performance-queue
+#          group: my-producer-group
+#          concurrency: 4
+#          maxConcurrency: 5

@@ -15,32 +15,29 @@
  */
 package oz.stream;
 
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import oz.stream.service.Uppercase;
 
 /**
- *
  * @author Oleg Zhurakousky
- *
  */
+@ComponentScan(basePackages = "oz.stream.*")
 @SpringBootApplication
 public class RabbitProducerTransactionDemo {
 
-	public static void main(String[] args) {
-		SpringApplication.run(RabbitProducerTransactionDemo.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(RabbitProducerTransactionDemo.class, args);
+    }
 
-	@Bean
-	public CommandLineRunner run(Uppercase uppercase) {
-		return (args) -> {
-			for(int index=0; index<10; index++) {
-				uppercase.accept("Enviando mensaje de prueba");
-			}
-		};
-	}
+    @Bean
+    public CommandLineRunner run(Uppercase uppercase) {
+        return (args) -> {
+            uppercase.producer("Enviando mensaje de prueba");
+        };
+    }
 
 }

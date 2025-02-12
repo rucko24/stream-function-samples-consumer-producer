@@ -23,12 +23,12 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import oz.stream.config.AppConfiguration;
 import oz.stream.model.DocValuesList;
 import oz.stream.model.MessageDto;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Oleg Zhurakousky
@@ -41,6 +41,7 @@ public class Uppercase {
     public static final String PERFORMANCE_QUEUE = "performance-queue";
     private final StreamBridge streamBridge;
     private final TaskExecutor threadPoolTaskExecutor;
+    private final AppConfiguration appConfiguration;
     private final ReadFileService readFileService;
 
     //@Override
@@ -49,28 +50,24 @@ public class Uppercase {
 
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
 
-        try(final Stream<String> stream = this.readFileService.getMessage()) {
+        final var message = this.readFileService.getMessage();
 
-            stream.forEach(message -> {
+        final CountDownLatch countDownLatch = new CountDownLatch(docValueList.size());
 
-                docValueList.forEach(item -> {
-                    threadPoolTaskExecutor.execute(() -> {
-                        final long docCount = item.getDocCount();
-                        if (docCount > 0) {
-                            final long delay = 60_000 / docCount;
-                            this.sendMessage(input, delay, docCount, message);
-                        }
-                    });
-                });
+        docValueList.forEach(item -> {
 
+            threadPoolTaskExecutor.execute(() -> {
+                int applyToDocCount = appConfiguration.getCorePoolSize() * appConfiguration.getReplicasOrInstances();
+                final long docCount = (item.getDocCount() / (applyToDocCount));
+                if (docCount > 0) {
+                    final long delay = 60_000 / (docCount);
+                    this.sendMessage(input, delay, docCount, message);
+                }
+                countDownLatch.countDown();
             });
+        });
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-
-
+        countDownLatch.countDown();
     }
 
     private void sendMessage(final String input, final long delay, final long docCount, String message) {

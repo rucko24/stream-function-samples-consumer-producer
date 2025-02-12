@@ -1,0 +1,14 @@
+
+services:
+  consumer:
+    build: .  # Construye la imagen desde el Dockerfile
+    deploy:
+      replicas: 3  # Lanza 3 instancias automáticamente
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "1g"
+    volumes:
+      - "/home/${USER}/logs:/home/${USER}/logs" # Carpeta compartida de logs
+    ports:
+      - "0:8083"  # Exponemos el puerto

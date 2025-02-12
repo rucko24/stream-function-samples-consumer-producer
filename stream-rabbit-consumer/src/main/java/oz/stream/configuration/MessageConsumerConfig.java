@@ -10,7 +10,7 @@ import oz.stream.writer.WriterService;
 import java.util.function.Consumer;
 
 @Log4j2
-@Configuration// Habilita el binding de entrada (Sink)
+@Configuration
 public class MessageConsumerConfig {
 
     @Bean

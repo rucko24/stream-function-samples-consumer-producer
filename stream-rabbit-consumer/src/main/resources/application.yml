@@ -1,9 +1,14 @@
 spring:
   cloud:
     function:
-      definition: producer
+      definition: consumer
     stream:
       default-binder: rabbit
+      rabbit:
+        bindings:
+          consumer-in-0:
+            consumer:
+              prefetch: 1
       binders:
         rabbit:
           type: rabbit
@@ -15,12 +20,9 @@ spring:
                 username: ${USER}
                 password: ${PASSWORD}
       bindings:
-        producer-in-0: # Canal de entrada (Consumidor)
+        consumer-in-0:  # Canal de entrada (Consumidor)
           destination: performance-queue
-#          concurrency: 4
-#          maxConcurrency: 5
-#        producer-out-0: # Canal de entrada (Consumidor)
-#          destination: performance-queue
-#          group: my-producer-group
-#          concurrency: 4
-#          maxConcurrency: 5
+          group: my-consumer-group
+          consumer:
+            concurrency: 5 # N�mero de consumidores concurrentes
+            prefetch: 1

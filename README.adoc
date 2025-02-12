@@ -73,3 +73,15 @@ image:https://github.com/user-attachments/assets/3f99b733-91f8-4f3d-9fea-ee72c69
 == El prefetch
 
 Para esta prueba el prefetch se dejara en uno, porque en caso de que una instancia se caiga, no se perderan mensajes, queremos que todos los mensajes los procese el consumer.
+
+== Reconstrucción de los contenedores
+
+En el IDE IntelliIdea podemos forzar a incluir el parametro `--build` y obligar la reconstrucción del contenedor para usar los ultimos cambios
+
+lo que seria en realidad esto pero desde consola
+
+[source,yml]
+----
+docker compose up --build 
+----
+

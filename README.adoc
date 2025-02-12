@@ -88,3 +88,5 @@ docker compose up --build -d
 La siguiente imagen, con IntellJ, se en el `badge` Build: Always por lo visto es el equivalente a la opción de docker de reconstruccion del proyecto.
 
 image:images/intellIdea-build-containers.png[width="100%"]
+
+video:images/rabbit-docker-compose.mp4[width=100%,start=60,opts=autoplay]

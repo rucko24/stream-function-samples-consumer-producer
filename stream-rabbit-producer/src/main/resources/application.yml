@@ -1,0 +1,33 @@
+spring:
+  cloud:
+    function:
+      definition: producer
+    stream:
+      default-binder: rabbit
+      binders:
+        rabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: ${URL_RABBIT}
+                port: 5672
+                username: ${USER}
+                password: ${PASSWORD}
+      bindings:
+        producer-in-0: # Canal de entrada (Consumidor)
+          destination: performance-queue
+#          concurrency: 4
+#          maxConcurrency: 5
+#        producer-out-0: # Canal de entrada (Consumidor)
+#          destination: performance-queue
+#          group: my-producer-group
+#          concurrency: 4
+#          maxConcurrency: 5
+
+
+app:
+  core:
+    core-pool-size: 3
+    max-core-pool-size: 3
+    replicas-or-instances: 3

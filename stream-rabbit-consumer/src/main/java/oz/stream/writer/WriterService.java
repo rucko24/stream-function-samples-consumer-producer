@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 public class WriterService {
 
     private static final DateTimeFormatter FORMATER = DateTimeFormatter.ofPattern("HH:mm");
-    private static final Path OUTPUT = Path.of("stream-rabbit-dlq/src/main/resources/log.txt");
+    private static final Path OUTPUT = Path.of("/home/rubn/logs/logs.txt");
 
 
     @Bean

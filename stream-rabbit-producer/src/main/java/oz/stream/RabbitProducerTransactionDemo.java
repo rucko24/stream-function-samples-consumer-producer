@@ -20,12 +20,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import oz.stream.service.Uppercase;
+import oz.stream.service.SendMessageService;
 
 /**
  * @author Oleg Zhurakousky
  */
-@ComponentScan(basePackages = "oz.stream.*")
 @SpringBootApplication
 public class RabbitProducerTransactionDemo {
 
@@ -34,9 +33,9 @@ public class RabbitProducerTransactionDemo {
     }
 
     @Bean
-    public CommandLineRunner run(Uppercase uppercase) {
+    public CommandLineRunner run(SendMessageService sendMessageService) {
         return (args) -> {
-            uppercase.producer("Enviando mensaje de prueba");
+            sendMessageService.producer("Enviando mensaje de prueba");
         };
     }
 

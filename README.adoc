@@ -82,6 +82,6 @@ lo que seria en realidad esto pero desde consola
 
 [source,yml]
 ----
-docker compose up --build 
+docker compose up --build -d
 ----
 

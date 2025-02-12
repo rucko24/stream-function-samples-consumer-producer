@@ -68,7 +68,7 @@ spring:
 ----
 <1> Desde aqui, usamos esto para conectarnos al broker
 
-https://github.com/user-attachments/assets/3f99b733-91f8-4f3d-9fea-ee72c69ee8b3[width="100%"]
+image:https://github.com/user-attachments/assets/3f99b733-91f8-4f3d-9fea-ee72c69ee8b3[width="100%"]
 
 == El prefetch
 

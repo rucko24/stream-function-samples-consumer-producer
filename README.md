@@ -24,4 +24,4 @@ services:
 - 1 CPU 
 - 1 GB de ram
 - 3 Threads configurables por cada instancia/replica de productor
-- Concurrencias ajudatable por parte del consumer
+- Concurrencias ajustable por parte del consumer

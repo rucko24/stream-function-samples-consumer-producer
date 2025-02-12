@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SonarLintProjectSettings">
+    <option name="moduleMapping">
+      <map>
+        <entry key="stream-rabbit-consumer" value="stream-rabbit-dlq" />
+        <entry key="stream-rabbit-producer" value="stream-rabbit-producer-transaction" />
+      </map>
+    </option>
+  </component>
+</project>

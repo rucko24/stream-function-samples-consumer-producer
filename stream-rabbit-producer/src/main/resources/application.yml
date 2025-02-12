@@ -28,6 +28,6 @@ spring:
 
 app:
   core:
-    core-pool-size: 3
-    max-core-pool-size: 3
+    core-pool-size: 1 # cada instancia tendra un Thread
+    max-core-pool-size: 1
     replicas-or-instances: 3

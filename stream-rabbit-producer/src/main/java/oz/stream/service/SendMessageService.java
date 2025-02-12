@@ -36,7 +36,7 @@ import java.util.concurrent.CountDownLatch;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class Uppercase {
+public class SendMessageService {
 
     public static final String PERFORMANCE_QUEUE = "performance-queue";
     private final StreamBridge streamBridge;
@@ -55,10 +55,11 @@ public class Uppercase {
         final CountDownLatch countDownLatch = new CountDownLatch(docValueList.size());
 
         docValueList.forEach(item -> {
-
             threadPoolTaskExecutor.execute(() -> {
-                int applyToDocCount = appConfiguration.getCorePoolSize() * appConfiguration.getReplicasOrInstances();
-                final long docCount = (item.getDocCount() / (applyToDocCount));
+                //Removiendo division por replicar
+                //int applyToDocCount = appConfiguration.getCorePoolSize() * appConfiguration.getReplicasOrInstances();
+                //final long docCount = (item.getDocCount() / (applyToDocCount));
+                final long docCount = (item.getDocCount() / appConfiguration.getReplicasOrInstances());
                 if (docCount > 0) {
                     final long delay = 60_000 / (docCount);
                     this.sendMessage(input, delay, docCount, message);
@@ -67,7 +68,11 @@ public class Uppercase {
             });
         });
 
-        countDownLatch.countDown();
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void sendMessage(final String input, final long delay, final long docCount, String message) {

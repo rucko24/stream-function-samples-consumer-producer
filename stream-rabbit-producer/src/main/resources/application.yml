@@ -17,17 +17,12 @@ spring:
       bindings:
         producer-in-0: # Canal de entrada (Consumidor)
           destination: performance-queue
-#          concurrency: 4
-#          maxConcurrency: 5
-#        producer-out-0: # Canal de entrada (Consumidor)
-#          destination: performance-queue
-#          group: my-producer-group
-#          concurrency: 4
-#          maxConcurrency: 5
-
+          producer:
+            # Número de hilos para el productor
+            concurrency: 6
 
 app:
   core:
-    core-pool-size: 3 # cada instancia tendra un Thread
-    max-core-pool-size: 3
+    core-pool-size: 4 # cada instancia tendra un Thread
+    max-core-pool-size: 4
     replicas-or-instances: 3

@@ -29,6 +29,7 @@ import oz.stream.model.MessageDto;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.StampedLock;
 
 /**
  * @author Oleg Zhurakousky
@@ -43,6 +44,8 @@ public class SendMessageService {
     private final TaskExecutor threadPoolTaskExecutor;
     private final AppConfiguration appConfiguration;
     private final ReadFileService readFileService;
+
+    private static final StampedLock STAMPED_LOCK = new StampedLock();
 
     //@Override
     @Transactional
@@ -85,16 +88,23 @@ public class SendMessageService {
         for (int index = 0; index < docCount; index++) {
             System.out.println("Uppercasing " + input + " " + Thread.currentThread().getName());
 
-            Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
-                    .setHeader("timeStamp", System.currentTimeMillis())
-                    .build();
+//            var stamped = STAMPED_LOCK.writeLock();
+//
+//            try {
+                Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
+                        .setHeader("timeStamp", System.currentTimeMillis())
+                        .build();
 
-            this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
+                this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
 
-            if (input.equals("fail")) {
-                System.out.println("throwing exception");
-                throw new RuntimeException("Itentional");
-            }
+                if (input.equals("fail")) {
+                    System.out.println("throwing exception");
+                    throw new RuntimeException("Itentional");
+                }
+//            } finally {
+//                STAMPED_LOCK.unlockWrite(stamped);
+//            }
+
 
             try {
                 Thread.sleep(delay);

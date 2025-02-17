@@ -17,7 +17,7 @@ services:
           cpus: "1.0"
           memory: "1g"
     volumes:
-      - "/home/${USER}/logs:/home/${USER}/logs" # Carpeta compartida de logs
+      - "/home/rubn/logs:/home/rubn/logs" # Carpeta compartida de logs
     ports:
       - "0:8083"  # Exponemos el puerto
 ----
@@ -54,7 +54,7 @@ spring:
           environment:
             spring:
               rabbitmq: <1>
-                host: ${URL_RABBIT}
+                host: ${URL_BROKER}
                 port: 5672
                 username: ${USER}
                 password: ${PASSWORD}

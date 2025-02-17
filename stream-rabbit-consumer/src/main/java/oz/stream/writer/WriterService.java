@@ -20,7 +20,7 @@ public class WriterService {
 
     private static final DateTimeFormatter FORMATER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter FORMATER_FILE_NAME = DateTimeFormatter.ofPattern("HH_mm_ss_SSSSS");
-    private static final Path OUTPUT = Path.of("/home/${USER}/logs/logs-"+ FORMATER_FILE_NAME.format(LocalTime.now())+".txt");
+    private static final Path OUTPUT = Path.of("/home/rubn/logs/logs-"+ FORMATER_FILE_NAME.format(LocalTime.now())+".txt");
     private static final StampedLock STAMPED_LOCK = new StampedLock();
 
     @Bean

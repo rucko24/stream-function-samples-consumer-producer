@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import oz.stream.model.MessageDto;
-import oz.stream.writer.WriterService;
+import oz.stream.service.writer.WriterService;
 
 import java.util.function.Consumer;
 

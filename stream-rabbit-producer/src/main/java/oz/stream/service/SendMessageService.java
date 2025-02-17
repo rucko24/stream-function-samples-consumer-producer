@@ -29,10 +29,11 @@ import oz.stream.model.MessageDto;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 
 /**
- * @author Oleg Zhurakousky
+ * @author Oleg Zhurakousky, rucko24
  */
 @Log4j2
 @Component
@@ -46,6 +47,8 @@ public class SendMessageService {
     private final ReadFileService readFileService;
 
     private static final StampedLock STAMPED_LOCK = new StampedLock();
+    private static final AtomicLong COUNTER = new AtomicLong();
+    private final ResponseTimeService responseTimeService = new ResponseTimeService();
 
     //@Override
     @Transactional
@@ -76,6 +79,8 @@ public class SendMessageService {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        log.info("Envio completado Tiempo total: {} Total docCount: {}", responseTimeService.formatResponseTime(), COUNTER.get());
+
     }
 
     private void sendMessage(final String input, final long delay, final long docCount, String message) {
@@ -105,7 +110,7 @@ public class SendMessageService {
 //                STAMPED_LOCK.unlockWrite(stamped);
 //            }
 
-
+            COUNTER.incrementAndGet();
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
@@ -113,8 +118,6 @@ public class SendMessageService {
             }
         }
 
-
     }
-
 
 }

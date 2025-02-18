@@ -15,7 +15,7 @@ spring:
           environment:
             spring:
               rabbitmq:
-                host: ${URL_RABBIT}
+                host: ${URL_BROKER}
                 port: 5672
                 username: ${USER}
                 password: ${PASSWORD}

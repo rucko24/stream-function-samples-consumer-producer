@@ -1,6 +1,9 @@
 package oz.stream.service.writer;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
@@ -16,12 +19,16 @@ import java.util.concurrent.locks.StampedLock;
 
 @Log4j2
 @Service
+@RequiredArgsConstructor
 public class WriterService {
 
     private static final DateTimeFormatter FORMATER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter FORMATER_FILE_NAME = DateTimeFormatter.ofPattern("HH_mm_ss_SSSSS");
     private static final Path OUTPUT = Path.of("/home/rubn/logs/logs-"+ FORMATER_FILE_NAME.format(LocalTime.now())+".txt");
     private static final StampedLock STAMPED_LOCK = new StampedLock();
+
+    private final RedissonClient redissonClient;
+
 
     @Bean
     public CommandLineRunner createFile() {
@@ -51,15 +58,15 @@ public class WriterService {
 
 
     private void writeLine(BufferedWriter writer, long latency) throws IOException {
-        var stamped = STAMPED_LOCK.writeLock();
-        // si usas un finaly y mas dentro un try/catch (race condition por lo visto)
+        final RLock lock = redissonClient.getLock("logFileLock");
+        lock.lock();
         try {
             //HH:mm;latency
             final String line = FORMATER.format(LocalTime.now()) + ";" + latency;
             writer.write(line);
             writer.newLine();
         } finally {
-            STAMPED_LOCK.unlockWrite(stamped);
+            lock.unlock();
         }
 
     }

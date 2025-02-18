@@ -15,7 +15,7 @@ spring:
           environment:
             spring:
               rabbitmq:
-                host: ${URL_BROKER}
+                host: ${URL_RABBIT}
                 port: 5672
                 username: ${USER}
                 password: ${PASSWORD}
@@ -26,3 +26,8 @@ spring:
           consumer:
             concurrency: 5 # N�mero de consumidores concurrentes
             prefetch: 1
+
+# App
+redis-credentials:
+  url: ${URL_REDIS}
+  password: ${URL_PASSWORD}

@@ -10,7 +10,7 @@ spring:
           environment:
             spring:
               rabbitmq:
-                host: ${URL_BROKER}
+                host: ${URL_RABBIT}
                 port: 5672
                 username: ${USER}
                 password: ${PASSWORD}
@@ -23,6 +23,6 @@ spring:
 
 app:
   core:
-    core-pool-size: 3 # cada instancia tendra un Thread
-    max-core-pool-size: 3
-    replicas-or-instances: 3
+    core-pool-size: 1 # cada instancia tendra un Thread
+    max-core-pool-size: 1
+    replicas-or-instances: 1

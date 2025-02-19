@@ -15,7 +15,7 @@ spring:
           environment:
             spring:
               rabbitmq:
-                host: ${URL_BROKER}
+                host: ${URL_RABBIT}
                 port: 5672
                 username: ${USER}
                 password: ${PASSWORD}
@@ -29,5 +29,5 @@ spring:
 
 # App
 redis-credentials:
-  url: ${URL_REDIS}
-  password: ${URL_PASSWORD}
+  url: redis://192.168.1.32:6379
+  password: ultrapassword

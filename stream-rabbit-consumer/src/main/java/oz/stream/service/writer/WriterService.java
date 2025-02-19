@@ -59,14 +59,14 @@ public class WriterService {
 
     private void writeLine(BufferedWriter writer, long latency) throws IOException {
         final RLock lock = redissonClient.getLock("logFileLock");
-        lock.lock();
+        //lock.lock();
         try {
             //HH:mm;latency
             final String line = FORMATER.format(LocalTime.now()) + ";" + latency;
             writer.write(line);
             writer.newLine();
         } finally {
-            lock.unlock();
+           // lock.unlock();
         }
 
     }

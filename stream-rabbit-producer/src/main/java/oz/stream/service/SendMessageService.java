@@ -46,7 +46,6 @@ public class SendMessageService {
     private final AppConfiguration appConfiguration;
     private final ReadFileService readFileService;
 
-    private static final StampedLock STAMPED_LOCK = new StampedLock();
     private static final AtomicLong COUNTER = new AtomicLong();
     private final ResponseTimeService responseTimeService = new ResponseTimeService();
 
@@ -62,13 +61,16 @@ public class SendMessageService {
 
         docValueList.forEach(item -> {
             threadPoolTaskExecutor.execute(() -> {
-                //Removiendo division por replicar
-                //int applyToDocCount = appConfiguration.getCorePoolSize() * appConfiguration.getReplicasOrInstances();
-                //final long docCount = (item.getDocCount() / (applyToDocCount));
-                final long docCount = (item.getDocCount() / appConfiguration.getReplicasOrInstances());
-                if (docCount > 0) {
-                    final long delay = 60_000 / (docCount);
-                    this.sendMessage(input, delay, docCount, message);
+                //Distribución de la carga (cantidad de mensajes):
+                final long totalDocCountToProcess = (item.getDocCount() / appConfiguration.getReplicasOrInstances());
+
+                //Control de la tasa de envío (delay entre mensajes):
+                int applyToDocCount = appConfiguration.getCorePoolSize() * appConfiguration.getReplicasOrInstances();
+                final long docCountForDelay = (item.getDocCount() / (applyToDocCount));
+
+                if (docCountForDelay > 0) {
+                    final long delay = 60_000 / (docCountForDelay);
+                    this.sendMessage(input, delay, totalDocCountToProcess, message);
                 }
                 countDownLatch.countDown();
             });
@@ -93,22 +95,15 @@ public class SendMessageService {
         for (int index = 0; index < docCount; index++) {
             System.out.println("Uppercasing " + input + " " + Thread.currentThread().getName());
 
-//            var stamped = STAMPED_LOCK.writeLock();
-//
-//            try {
-                Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
-                        .setHeader("timeStamp", System.currentTimeMillis())
-                        .build();
+            Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
+                    .build();
 
-                this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
+            this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
 
-                if (input.equals("fail")) {
-                    System.out.println("throwing exception");
-                    throw new RuntimeException("Itentional");
-                }
-//            } finally {
-//                STAMPED_LOCK.unlockWrite(stamped);
-//            }
+            if (input.equals("fail")) {
+                System.out.println("throwing exception");
+                throw new RuntimeException("Itentional");
+            }
 
             COUNTER.incrementAndGet();
             try {

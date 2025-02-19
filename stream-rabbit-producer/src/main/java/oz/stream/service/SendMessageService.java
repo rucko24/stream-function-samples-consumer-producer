@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2021 the original author or authors.
+ * Copyright 2021-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,9 @@ import oz.stream.model.MessageDto;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.StampedLock;
 
 /**
- * @author Oleg Zhurakousky, rucko24
+ * @author Oleg Zhurakousky, @rucko24
  */
 @Log4j2
 @Component
@@ -49,70 +48,73 @@ public class SendMessageService {
     private static final AtomicLong COUNTER = new AtomicLong();
     private final ResponseTimeService responseTimeService = new ResponseTimeService();
 
-    //@Override
+    // Utilizamos un AtomicLong para trackear el último tiempo de envío global
+    private final AtomicLong lastGlobalSendTime = new AtomicLong(0);
+
     @Transactional
     public void producer(String input) {
-
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
-
         final var message = this.readFileService.getMessage();
 
-        final CountDownLatch countDownLatch = new CountDownLatch(docValueList.size());
+        long totalDocuments = docValueList.stream()
+                .mapToLong(DocValuesList::getDocCount)
+                .sum();
 
+        int cadaDocCountAMinutos = 60 * docValueList.size();
+        int targetGlobalRate = (int) Math.ceil((double) totalDocuments / cadaDocCountAMinutos);
+
+        long globalDelayPerMessage = Math.round(1000.0 / targetGlobalRate * 1_000_000); // en nanosegundos
+
+        log.info("Configuración: Target Rate Global: {} msg/s, Delay entre mensajes: {} ns", targetGlobalRate, globalDelayPerMessage);
+
+        // Inicializamos el tiempo de inicio
+        lastGlobalSendTime.set(System.nanoTime());
+
+        final CountDownLatch countDownLatch = new CountDownLatch(docValueList.size());
         docValueList.forEach(item -> {
             threadPoolTaskExecutor.execute(() -> {
-                //Distribución de la carga (cantidad de mensajes):
-                final long totalDocCountToProcess = (item.getDocCount() / appConfiguration.getReplicasOrInstances());
-
-                //Control de la tasa de envío (delay entre mensajes):
-                int applyToDocCount = appConfiguration.getCorePoolSize() * appConfiguration.getReplicasOrInstances();
-                final long docCountForDelay = (item.getDocCount() / (applyToDocCount));
-
-                if (docCountForDelay > 0) {
-                    final long delay = 60_000 / (docCountForDelay);
-                    this.sendMessage(input, delay, totalDocCountToProcess, message);
+                final long totalDocCountToProcess = item.getDocCount() / appConfiguration.getReplicasOrInstances();
+                if (totalDocCountToProcess > 0) {
+                    this.sendMessage(globalDelayPerMessage, totalDocCountToProcess, message);
                 }
                 countDownLatch.countDown();
             });
         });
-
         try {
             countDownLatch.await();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        log.info("Envio completado Tiempo total: {} Total docCount: {}", responseTimeService.formatResponseTime(), COUNTER.get());
-
+        log.info("Envío completado. Tiempo total: {} Total docCount: {}", responseTimeService.formatResponseTime(), COUNTER.get());
     }
 
-    private void sendMessage(final String input, final long delay, final long docCount, String message) {
-
-        log.info("Enviando mensaje con delay de {} ms para docCount {}", delay, docCount);
-
+    private void sendMessage(final long globalDelay, final long totalDocCountToProcess, String message) {
+        log.info("Iniciando envío para docCount {} con delay global {} ns", totalDocCountToProcess, globalDelay);
         MessageDto messageDto = new MessageDto();
         messageDto.setMessage(message);
 
-        for (int index = 0; index < docCount; index++) {
-            System.out.println("Uppercasing " + input + " " + Thread.currentThread().getName());
+        for (int index = 0; index < totalDocCountToProcess; index++) {
+            // Intentamos obtener el siguiente slot de tiempo disponible
+            long currentSlot;
+            long nextSlot;
+
+            //CAS
+            do {
+                currentSlot = lastGlobalSendTime.get();
+                nextSlot = currentSlot + globalDelay;
+            } while (!lastGlobalSendTime.compareAndSet(currentSlot, nextSlot));
+
+            // Esperamos hasta que sea nuestro turno
+            while (System.nanoTime() < nextSlot) {
+                Thread.onSpinWait();
+            }
 
             Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
+                    .setHeader("timestamp_ms", System.currentTimeMillis())
                     .build();
 
             this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
-
-            if (input.equals("fail")) {
-                System.out.println("throwing exception");
-                throw new RuntimeException("Itentional");
-            }
-
             COUNTER.incrementAndGet();
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
         }
-
     }
-
 }

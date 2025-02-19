@@ -3,7 +3,7 @@ services:
   consumer:
     build: .  # Construye la imagen desde el Dockerfile
     deploy:
-      replicas: 3  # Lanza 3 instancias automáticamente
+      replicas: 10  # Lanza 3 instancias automáticamente
       resources:
         limits:
           cpus: "1.0"

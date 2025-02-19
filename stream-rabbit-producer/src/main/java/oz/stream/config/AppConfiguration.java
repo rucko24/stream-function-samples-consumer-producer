@@ -12,5 +12,14 @@ public class AppConfiguration {
     private Integer corePoolSize;
     private Integer maxCorePoolSize;
     private Integer replicasOrInstances;
+    private String configFile;
+    private String messageFile;
 
+    public String getConfigFile() {
+        return "/configuration_" + configFile + ".json";
+    }
+
+    public String getMessageFile() {
+        return "/" + configFile + ".json";
+    }
 }

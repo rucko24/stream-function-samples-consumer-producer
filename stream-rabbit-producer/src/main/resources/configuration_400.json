@@ -1,0 +1,45 @@
+{
+  "values": [
+    {
+      "dato": 1,
+      "doc_count": 24000
+    },
+    {
+      "dato": 2,
+      "doc_count": 24000
+    },
+    {
+      "dato": 3,
+      "doc_count": 24000
+    },
+    {
+      "dato": 4,
+      "doc_count": 24000
+    },
+    {
+      "dato": 5,
+      "doc_count": 24000
+    },
+    {
+      "dato": 6,
+      "doc_count": 24000
+    },
+    {
+      "dato": 7,
+      "doc_count": 24000
+    },
+    {
+      "dato": 8,
+      "doc_count": 24000
+    },
+    {
+      "dato": 9,
+      "doc_count": 24000
+    },
+    {
+      "dato": 10,
+      "doc_count": 24000
+    }
+
+  ]
+}

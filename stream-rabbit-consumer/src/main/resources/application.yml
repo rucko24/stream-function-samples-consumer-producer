@@ -15,7 +15,7 @@ spring:
           environment:
             spring:
               rabbitmq:
-                host: ${URL_RABBIT}
+                host: ${URL_BROKER}
                 port: 5672
                 username: ${USER}
                 password: ${PASSWORD}
@@ -24,10 +24,10 @@ spring:
           destination: performance-queue
           group: my-consumer-group
           consumer:
-            concurrency: 5 # N�mero de consumidores concurrentes
+            concurrency: 10 # N�mero de consumidores concurrentes
             prefetch: 1
 
 # App
 redis-credentials:
-  url: redis://192.168.1.32:6379
-  password: ultrapassword
+  url: ${URL_REDIS}
+  password: ${URL_PASSWORD}

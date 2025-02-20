@@ -56,16 +56,7 @@ public class SendMessageService {
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
         final var message = this.readFileService.getMessage();
 
-        long totalDocuments = docValueList.stream()
-                .mapToLong(DocValuesList::getDocCount)
-                .sum();
-
-        int cadaDocCountAMinutos = 60 * docValueList.size();
-        int targetGlobalRate = (int) Math.ceil((double) totalDocuments / cadaDocCountAMinutos);
-
-        long globalDelayPerMessage = Math.round(1000.0 / targetGlobalRate * 1_000_000); // en nanosegundos
-
-        log.info("Configuración: Target Rate Global: {} msg/s, Delay entre mensajes: {} ns", targetGlobalRate, globalDelayPerMessage);
+        final long globalDelayPerMessage = this.globalDelayPerMessage(docValueList);
 
         // Inicializamos el tiempo de inicio
         lastGlobalSendTime.set(System.nanoTime());
@@ -88,31 +79,42 @@ public class SendMessageService {
         log.info("Envío completado. Tiempo total: {} Total docCount: {}", responseTimeService.formatResponseTime(), COUNTER.get());
     }
 
-    private void sendMessage(final long globalDelay, final long totalDocCountToProcess, String message) {
-        log.info("Iniciando envío para docCount {} con delay global {} ns", totalDocCountToProcess, globalDelay);
+    private long globalDelayPerMessage(List<DocValuesList> docValueList) {
+        final long totalDocuments = docValueList.stream()
+                .mapToLong(item -> item.getDocCount() / this.appConfiguration.getReplicasOrInstances())
+                .sum();
+        //cadaDocCountAMinutos => Total de minutos por cada doc_count
+        final int totalDocCountEnMinutos = 60 * docValueList.size();
+//        final int targetGlobalRate = (int) Math.ceil((double) totalDocuments / totalDocCountEnMinutos);
+        final double targetGlobalRate = (double) totalDocuments / totalDocCountEnMinutos;
+
+        final long globalDelayPerMsg = Math.round(1000.0 / targetGlobalRate * 1_000_000); // en nanosegundos
+        log.info("Configuración Target Rate Global: {} msg/s, Delay entre mensajes: {} ns", targetGlobalRate, globalDelayPerMsg);
+        return globalDelayPerMsg;
+    }
+
+    private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess, String messagePayload) {
+        log.info("Iniciando envío de {} mensajes con un delay de {} ns", totalDocCountToProcess, globalDelayPerMessage);
         MessageDto messageDto = new MessageDto();
-        messageDto.setMessage(message);
+        messageDto.setMessage(messagePayload);
 
         for (int index = 0; index < totalDocCountToProcess; index++) {
             // Intentamos obtener el siguiente slot de tiempo disponible
+            // mantiene ritmo global entre Threads, sin context switching
             long currentSlot;
             long nextSlot;
 
-            //CAS
             do {
                 currentSlot = lastGlobalSendTime.get();
-                nextSlot = currentSlot + globalDelay;
-            } while (!lastGlobalSendTime.compareAndSet(currentSlot, nextSlot));
-
+                nextSlot = currentSlot + globalDelayPerMessage;
+            } while (!lastGlobalSendTime.compareAndSet(currentSlot, nextSlot)); //CAS
             // Esperamos hasta que sea nuestro turno
             while (System.nanoTime() < nextSlot) {
                 Thread.onSpinWait();
             }
-
             Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
                     .setHeader("timestamp_ms", System.currentTimeMillis())
                     .build();
-
             this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
             COUNTER.incrementAndGet();
         }

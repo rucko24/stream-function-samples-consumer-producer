@@ -6,10 +6,10 @@ import org.redisson.config.Config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+//@Configuration
 public class RedissonClientConfiguration {
 
-    @Bean
+    //@Bean
     public RedissonClient redissonClient(RedissonCredentialsConfiguration credentialsConfiguration) {
         Config config = new Config();
         // Suponiendo que Redis corre localmente en el puerto 6379

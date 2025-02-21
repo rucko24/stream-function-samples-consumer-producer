@@ -16,8 +16,8 @@ public class MessageConsumerConfig {
     @Bean
     public Consumer<Message<MessageDto>> consumer(WriterService writerService) {
         return messageDtoMessage -> {
-            if(messageDtoMessage.getHeaders().get("timestamp") != null) {
-                long currentTime = (long) messageDtoMessage.getHeaders().get("timestamp");
+            if(messageDtoMessage.getHeaders().get("timestamp_ms") != null) {
+                long currentTime = (long) messageDtoMessage.getHeaders().get("timestamp_ms");
                 log.info("timeStamp del producer: {}", currentTime);
                 long latencia = System.currentTimeMillis() - currentTime;
                 log.info("Mensaje recibido (ms) {} thread: {}", latencia, Thread.currentThread().getName());

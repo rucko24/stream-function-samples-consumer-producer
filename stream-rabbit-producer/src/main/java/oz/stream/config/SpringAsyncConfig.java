@@ -13,7 +13,7 @@ public class SpringAsyncConfig {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(configuration.getCorePoolSize());  // Minimum number of threads in the pool
         executor.setMaxPoolSize(configuration.getMaxCorePoolSize());  // Maximum number of threads in the pool
-        executor.setThreadNamePrefix("ProducerTaskExecutor-");  // Prefix for thread names
+        executor.setThreadNamePrefix("RabbitProducerTaskExecutor-");  // Prefix for thread names
         executor.initialize();  // Initializes the thread pool
         return executor;
     }

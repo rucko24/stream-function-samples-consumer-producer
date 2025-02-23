@@ -1,6 +1,7 @@
 server:
   tomcat:
-    max-threads: 1 # Maximum amount of worker threads.
+    threads:
+      max: 1 # Maximum amount of worker threads.
 spring:
   cloud:
     function:
@@ -26,5 +27,5 @@ app:
     core-pool-size: 3
     max-core-pool-size: 3
     replicas-or-instances: 1
-    configFile: 500
-    messageFile: L
+    configFile: 100
+    messageFile: XL

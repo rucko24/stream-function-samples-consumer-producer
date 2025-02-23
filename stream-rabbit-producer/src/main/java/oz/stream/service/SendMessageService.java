@@ -53,6 +53,7 @@ public class SendMessageService {
 
     @Transactional
     public void producer(String input) {
+
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
         final var message = this.readFileService.getMessage();
 
@@ -65,16 +66,14 @@ public class SendMessageService {
         docValueList.forEach(item -> {
             threadPoolTaskExecutor.execute(() -> {
                 final long totalDocCountToProcess = item.getDocCount() / appConfiguration.getReplicasOrInstances();
-                if (totalDocCountToProcess > 0) {
-                    this.sendMessage(globalDelayPerMessage, totalDocCountToProcess, message);
-                }
+                this.sendMessage(globalDelayPerMessage, totalDocCountToProcess, message);
                 countDownLatch.countDown();
             });
         });
         try {
             countDownLatch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
         }
         log.info("Envío completado. Tiempo total: {} Total docCount: {}", responseTimeService.formatResponseTime(), COUNTER.get());
     }
@@ -115,6 +114,7 @@ public class SendMessageService {
             Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
                     .setHeader("timestamp_ms", System.currentTimeMillis())
                     .build();
+
             this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
             COUNTER.incrementAndGet();
         }

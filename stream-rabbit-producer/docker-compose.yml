@@ -1,18 +1,15 @@
-
 services:
   producer:
-    build: .  # Construye la imagen desde el Dockerfile
+    build: .
+    environment:
+      URL_BROKER: ${URL_BROKER}
+      USER: ${USER}
+      PASSWORD: ${PASSWORD}
     deploy:
-      replicas: 3  # Lanza 3 instancias automáticamente
+      replicas: 1
       resources:
         limits:
           cpus: "1.0"
           memory: "1g"
     volumes:
-      - "/home/rubn/logs:/home/rubn/logs" # Carpeta compartida de logs
-    ports:
-      - "0:8083"  # Exponemos el puerto
-
-
-# 1CPU 1GB RAM
-# Que se envien todos los mensajes
+      - "/home/rubn/logs:/home/rubn/logs"

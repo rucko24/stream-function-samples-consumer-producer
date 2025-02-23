@@ -1,4 +1,6 @@
 spring:
+  main:
+    web-application-type: NONE
   cloud:
     function:
       definition: consumer
@@ -24,10 +26,5 @@ spring:
           destination: performance-queue
           group: my-consumer-group
           consumer:
-            concurrency: 10 # N�mero de consumidores concurrentes
+            concurrency: 15 # Número de consumidores concurrentes
             prefetch: 1
-
-# App
-redis-credentials:
-  url: ${URL_REDIS}
-  password: ${URL_PASSWORD}

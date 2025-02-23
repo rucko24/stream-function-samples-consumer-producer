@@ -20,6 +20,6 @@ public class AppConfiguration {
     }
 
     public String getMessageFile() {
-        return "/" + configFile + ".json";
+        return "/" + messageFile + ".json";
     }
 }

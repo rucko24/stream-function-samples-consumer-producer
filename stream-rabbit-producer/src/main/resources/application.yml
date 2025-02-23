@@ -24,8 +24,8 @@ spring:
 
 app:
   core:
-    core-pool-size: 3
-    max-core-pool-size: 3
+    core-pool-size: 2
+    max-core-pool-size: 2
     replicas-or-instances: 1
-    configFile: 100
-    messageFile: XL
+    configFile: 500
+    messageFile: L

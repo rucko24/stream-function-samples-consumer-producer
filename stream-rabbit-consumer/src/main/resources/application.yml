@@ -26,5 +26,5 @@ spring:
           destination: performance-queue
           group: my-consumer-group
           consumer:
-            concurrency: 15 # Número de consumidores concurrentes
+            concurrency: 45 # Número de consumidores concurrentes
             prefetch: 1

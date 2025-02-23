@@ -17,7 +17,7 @@ public class MessageConsumerConfig {
     public Consumer<Message<MessageDto>> consumer(WriterService writerService) {
         return messageDtoMessage -> {
             long latencia = System.currentTimeMillis() - (long) messageDtoMessage.getHeaders().get("timestamp_ms");
-            log.info("Mensaje recibido (ms) {} thread: {}", latencia, Thread.currentThread().getName());
+            //log.info("Mensaje recibido (ms) {} thread: {}", latencia, Thread.currentThread().getName());
             writerService.writer(latencia);
         };
     }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
@@ -58,6 +59,11 @@ public class WriterService {
         writer.write(line);
         writer.newLine();
 
+    }
+
+    @EventListener
+    public void listener(String isEvent) {
+        log.info("Event: {}", isEvent);
     }
 
 }

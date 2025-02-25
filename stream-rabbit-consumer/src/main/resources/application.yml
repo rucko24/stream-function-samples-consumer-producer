@@ -26,5 +26,9 @@ spring:
           destination: performance-queue
           group: my-consumer-group
           consumer:
-            concurrency: 45 # Número de consumidores concurrentes
+            concurrency: 14 # Número de consumidores concurrentes
             prefetch: 1
+
+logging:
+  level:
+    org.springframework.integration.handler.support.MessagingMethodInvokerHelper: OFF

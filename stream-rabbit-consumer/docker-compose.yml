@@ -3,9 +3,9 @@ services:
   consumer:
     build: .  # Construye la imagen desde el Dockerfile
     environment:
-      URL_BROKER: ${URL_BROKER}
-      USER: ${USER}
-      PASSWORD: ${PASSWORD}
+      URL_BROKER: 192.168.1.27
+      USER: rubn
+      PASSWORD: password
     deploy:
       replicas: 3  # Lanza 3 instancias automáticamente
       resources:

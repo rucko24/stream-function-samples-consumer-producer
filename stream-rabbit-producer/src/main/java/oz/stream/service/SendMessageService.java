@@ -24,11 +24,13 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import oz.stream.config.AppConfiguration;
+
 import oz.stream.model.DocValuesList;
 import oz.stream.model.MessageDto;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -57,34 +59,48 @@ public class SendMessageService {
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
         final var message = this.readFileService.getMessage();
 
-        final long globalDelayPerMessage = this.globalDelayPerMessage(docValueList);
+        final long totalMessages = getTotalMessages(docValueList);
+
+        final long globalDelayPerMessage = this.globalDelayPerMessage(docValueList, totalMessages);
 
         // Inicializamos el tiempo de inicio
         lastGlobalSendTime.set(System.nanoTime());
 
-        final CountDownLatch countDownLatch = new CountDownLatch(docValueList.size());
-        docValueList.forEach(item -> {
+        // Número de threads deseado (puedes obtenerlo de una configuración)
+        final int numThreads = appConfiguration.getCorePoolSize(); // Ejemplo: 5
+        // Calcular mensajes por thread
+        final long messagesPerThread = totalMessages / numThreads;
+        final long remainder = totalMessages % numThreads; // Mensajes sobrantes
+
+        final CountDownLatch countDownLatch = new CountDownLatch(numThreads);
+
+        for (int index = 0; index < numThreads; index++) {
+            // Si hay resto, algunos threads envían un mensaje extra
+            final long messagesForThisThread = messagesPerThread + (index < remainder ? 1 : 0);
             threadPoolTaskExecutor.execute(() -> {
-                final long totalDocCountToProcess = item.getDocCount() / appConfiguration.getReplicasOrInstances();
-                this.sendMessage(globalDelayPerMessage, totalDocCountToProcess, message);
+                this.sendMessage(globalDelayPerMessage, messagesForThisThread, message);
                 countDownLatch.countDown();
             });
-        });
+        }
         try {
             countDownLatch.await();
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
         log.info("Envío completado. Tiempo total: {} Total docCount: {}", responseTimeService.formatResponseTime(), COUNTER.get());
+
     }
 
-    private long globalDelayPerMessage(List<DocValuesList> docValueList) {
-        final long totalDocuments = docValueList.stream()
-                .mapToLong(item -> item.getDocCount() / this.appConfiguration.getReplicasOrInstances())
+    private long getTotalMessages(List<DocValuesList> docValueList) {
+        // Calcular el total de mensajes a enviar
+        return docValueList.stream()
+                .mapToLong(item -> item.getDocCount() / appConfiguration.getReplicasOrInstances())
                 .sum();
+    }
+
+    private long globalDelayPerMessage(List<DocValuesList> docValueList, final long totalDocuments) {
         //cadaDocCountAMinutos => Total de minutos por cada doc_count
         final int totalDocCountEnMinutos = 60 * docValueList.size();
-//        final int targetGlobalRate = (int) Math.ceil((double) totalDocuments / totalDocCountEnMinutos);
         final double targetGlobalRate = (double) totalDocuments / totalDocCountEnMinutos;
 
         final long globalDelayPerMsg = Math.round(1000.0 / targetGlobalRate * 1_000_000); // en nanosegundos
@@ -93,7 +109,7 @@ public class SendMessageService {
     }
 
     private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess, String messagePayload) {
-        log.info("Iniciando envío de {} mensajes con un delay de {} ns", totalDocCountToProcess, globalDelayPerMessage);
+        log.info("Iniciando envío de {} mensajes con un delay de {} ms", totalDocCountToProcess, TimeUnit.NANOSECONDS.toMillis(globalDelayPerMessage));
         MessageDto messageDto = new MessageDto();
         messageDto.setMessage(messagePayload);
 
@@ -117,6 +133,7 @@ public class SendMessageService {
 
             this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
             COUNTER.incrementAndGet();
+
         }
     }
 }

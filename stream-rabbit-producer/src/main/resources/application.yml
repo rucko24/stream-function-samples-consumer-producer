@@ -1,7 +1,7 @@
 server:
+  port: 8084
   tomcat:
-    threads:
-      max: 1 # Maximum amount of worker threads.
+    max-threads: 1 # Maximum amount of worker threads.
 spring:
   cloud:
     function:
@@ -14,18 +14,22 @@ spring:
           environment:
             spring:
               rabbitmq:
-                host: ${URL_BROKER}
+                host: 192.168.1.27
                 port: 5672
-                username: ${USER}
-                password: ${PASSWORD}
+                username: rubn
+                password: password
       bindings:
         producer-in-0: # Canal de entrada (Consumidor)
           destination: performance-queue
 
+logging:
+  level:
+    org.springframework.cloud.function.context.catalog.BeanFactoryAwareFunctionRegistry: OFF
+
 app:
   core:
-    core-pool-size: 2
-    max-core-pool-size: 2
-    replicas-or-instances: 1
-    configFile: 500
+    core-pool-size: 3
+    max-core-pool-size: 3
+    replicas-or-instances: 3
+    configFile: 100
     messageFile: L

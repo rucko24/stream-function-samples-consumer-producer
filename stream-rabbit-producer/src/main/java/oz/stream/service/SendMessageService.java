@@ -18,18 +18,19 @@ package oz.stream.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import oz.stream.config.AppConfiguration;
-
 import oz.stream.model.DocValuesList;
 import oz.stream.model.MessageDto;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -43,7 +44,7 @@ public class SendMessageService {
 
     public static final String PERFORMANCE_QUEUE = "performance-queue";
     private final StreamBridge streamBridge;
-    private final TaskExecutor threadPoolTaskExecutor;
+    private final ScheduledExecutorService scheduledExecutorService;
     private final AppConfiguration appConfiguration;
     private final ReadFileService readFileService;
 
@@ -64,7 +65,7 @@ public class SendMessageService {
         final long globalDelayPerMessage = this.globalDelayPerMessage(docValueList, totalMessages);
 
         // Inicializamos el tiempo de inicio
-        lastGlobalSendTime.set(System.nanoTime());
+        //lastGlobalSendTime.set(System.nanoTime());
 
         // Número de threads deseado (puedes obtenerlo de una configuración)
         final int numThreads = appConfiguration.getCorePoolSize(); // Ejemplo: 5
@@ -72,15 +73,16 @@ public class SendMessageService {
         final long messagesPerThread = totalMessages / numThreads;
         final long remainder = totalMessages % numThreads; // Mensajes sobrantes
 
-        final CountDownLatch countDownLatch = new CountDownLatch(numThreads);
+        final CountDownLatch countDownLatch = new CountDownLatch((int) totalMessages);
 
         for (int index = 0; index < numThreads; index++) {
             // Si hay resto, algunos threads envían un mensaje extra
             final long messagesForThisThread = messagesPerThread + (index < remainder ? 1 : 0);
-            threadPoolTaskExecutor.execute(() -> {
-                this.sendMessage(globalDelayPerMessage, messagesForThisThread, message);
-                countDownLatch.countDown();
-            });
+            scheduledExecutorService.schedule(() -> {
+
+                this.sendMessage(globalDelayPerMessage, messagesForThisThread, message, countDownLatch);
+
+            }, 0, TimeUnit.MICROSECONDS);
         }
         try {
             countDownLatch.await();
@@ -101,38 +103,34 @@ public class SendMessageService {
     private long globalDelayPerMessage(List<DocValuesList> docValueList, final long totalDocuments) {
         //cadaDocCountAMinutos => Total de minutos por cada doc_count
         final int totalDocCountEnMinutos = 60 * docValueList.size();
-        final double targetGlobalRate = (double) totalDocuments / totalDocCountEnMinutos;
+        final double targetGlobalRate = ((double) totalDocuments / totalDocCountEnMinutos);
+        final double targetRatePerThread = targetGlobalRate / this.appConfiguration.getCorePoolSize();
 
-        final long globalDelayPerMsg = Math.round(1000.0 / targetGlobalRate * 1_000_000); // en nanosegundos
-        log.info("Configuración Target Rate Global: {} msg/s, Delay entre mensajes: {} ns", targetGlobalRate, globalDelayPerMsg);
-        return globalDelayPerMsg;
+        final long globalDelayPerMessage = Math.round(1_000_000_000.0 / targetRatePerThread); // ns por mensaje
+        var formatTargetRatePerThread = BigDecimal.valueOf(targetRatePerThread).setScale(2, RoundingMode.HALF_EVEN);
+        log.info("Configuración Target Rate Global: [{}] msg/s, Target Rate Per Thread: [{}] msg/s, Delay between msg: [{}] ns", targetGlobalRate, formatTargetRatePerThread, globalDelayPerMessage);
+        return globalDelayPerMessage;
     }
 
-    private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess, String messagePayload) {
+    private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess,
+                             final String messagePayload, final CountDownLatch countDownLatch) {
         log.info("Iniciando envío de {} mensajes con un delay de {} ms", totalDocCountToProcess, TimeUnit.NANOSECONDS.toMillis(globalDelayPerMessage));
         MessageDto messageDto = new MessageDto();
         messageDto.setMessage(messagePayload);
 
         for (int index = 0; index < totalDocCountToProcess; index++) {
-            // Intentamos obtener el siguiente slot de tiempo disponible
-            // mantiene ritmo global entre Threads, sin context switching
-            long currentSlot;
-            long nextSlot;
 
-            do {
-                currentSlot = lastGlobalSendTime.get();
-                nextSlot = currentSlot + globalDelayPerMessage;
-            } while (!lastGlobalSendTime.compareAndSet(currentSlot, nextSlot)); //CAS
-            // Esperamos hasta que sea nuestro turno
-            while (System.nanoTime() < nextSlot) {
-                Thread.onSpinWait();
-            }
-            Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
-                    .setHeader("timestamp_ms", System.currentTimeMillis())
-                    .build();
+            this.scheduledExecutorService.schedule(() -> {
 
-            this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
-            COUNTER.incrementAndGet();
+                Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
+                        .setHeader("timestamp_ms", System.currentTimeMillis())
+                        .build();
+
+                this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
+                COUNTER.incrementAndGet();
+                countDownLatch.countDown();
+
+            }, globalDelayPerMessage * index, TimeUnit.NANOSECONDS);
 
         }
     }

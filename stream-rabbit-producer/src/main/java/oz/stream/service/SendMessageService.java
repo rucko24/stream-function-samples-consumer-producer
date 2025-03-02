@@ -28,6 +28,8 @@ import oz.stream.config.AppConfiguration;
 import oz.stream.model.DocValuesList;
 import oz.stream.model.MessageDto;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -102,9 +104,10 @@ public class SendMessageService {
         //cadaDocCountAMinutos => Total de minutos por cada doc_count
         final int totalDocCountEnMinutos = 60 * docValueList.size();
         final double targetGlobalRate = (double) totalDocuments / totalDocCountEnMinutos;
-
+        final double targetRatePerThread = targetGlobalRate / this.appConfiguration.getCorePoolSize();
         final long globalDelayPerMsg = Math.round(1000.0 / targetGlobalRate * 1_000_000); // en nanosegundos
-        log.info("Configuración Target Rate Global: {} msg/s, Delay entre mensajes: {} ns", targetGlobalRate, globalDelayPerMsg);
+        var formatTargetRatePerThread = BigDecimal.valueOf(targetRatePerThread).setScale(2, RoundingMode.HALF_EVEN);
+        log.info("Configuración Target Rate Global: [{}] msg/s, Target Rate Per Thread: [{}] msg/s, Delay between msg: [{}] ns", targetGlobalRate, formatTargetRatePerThread, globalDelayPerMsg);
         return globalDelayPerMsg;
     }
 

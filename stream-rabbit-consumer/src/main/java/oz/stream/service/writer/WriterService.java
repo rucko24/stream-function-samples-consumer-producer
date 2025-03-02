@@ -61,9 +61,4 @@ public class WriterService {
 
     }
 
-    @EventListener
-    public void listener(String isEvent) {
-        log.info("Event: {}", isEvent);
-    }
-
 }

@@ -22,14 +22,19 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Indexed;
 import org.springframework.transaction.annotation.Transactional;
 import oz.stream.config.AppConfiguration;
-
 import oz.stream.model.DocValuesList;
 import oz.stream.model.MessageDto;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +50,7 @@ public class SendMessageService {
 
     public static final String PERFORMANCE_QUEUE = "performance-queue";
     private final StreamBridge streamBridge;
-    private final TaskExecutor threadPoolTaskExecutor;
+    private final Scheduler scheduler;
     private final AppConfiguration appConfiguration;
     private final ReadFileService readFileService;
 
@@ -76,14 +81,13 @@ public class SendMessageService {
 
         final CountDownLatch countDownLatch = new CountDownLatch(numThreads);
 
-        for (int index = 0; index < numThreads; index++) {
-            // Si hay resto, algunos threads envían un mensaje extra
-            final long messagesForThisThread = messagesPerThread + (index < remainder ? 1 : 0);
-            threadPoolTaskExecutor.execute(() -> {
-                this.sendMessage(globalDelayPerMessage, messagesForThisThread, message);
-                countDownLatch.countDown();
-            });
-        }
+        Flux.range(0, numThreads)
+                .flatMap(index -> {
+                    final long messagesForThisThread = messagesPerThread + (index < remainder ? 1 : 0);
+                    return this.sendMessage(globalDelayPerMessage, messagesForThisThread, message, countDownLatch);
+                })
+                .subscribe();
+
         try {
             countDownLatch.await();
         } catch (InterruptedException ex) {
@@ -111,32 +115,28 @@ public class SendMessageService {
         return globalDelayPerMsg;
     }
 
-    private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess, String messagePayload) {
+    private Mono<Void> sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess,
+                                      String messagePayload, final CountDownLatch countDownLatch) {
         log.info("Iniciando envío de {} mensajes con un delay de {} ms", totalDocCountToProcess, TimeUnit.NANOSECONDS.toMillis(globalDelayPerMessage));
         MessageDto messageDto = new MessageDto();
         messageDto.setMessage(messagePayload);
 
-        for (int index = 0; index < totalDocCountToProcess; index++) {
-            // Intentamos obtener el siguiente slot de tiempo disponible
-            // mantiene ritmo global entre Threads, sin context switching
-            long currentSlot;
-            long nextSlot;
+        return Flux.range(0, (int) totalDocCountToProcess)
+                .delayElements(Duration.ofNanos(globalDelayPerMessage))
+                .publishOn(this.scheduler)
+                .doOnNext(onNext -> {
 
-            do {
-                currentSlot = lastGlobalSendTime.get();
-                nextSlot = currentSlot + globalDelayPerMessage;
-            } while (!lastGlobalSendTime.compareAndSet(currentSlot, nextSlot)); //CAS
-            // Esperamos hasta que sea nuestro turno
-            while (System.nanoTime() < nextSlot) {
-                Thread.onSpinWait();
-            }
-            Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
-                    .setHeader("timestamp_ms", System.currentTimeMillis())
-                    .build();
+                    Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
+                            .setHeader("timestamp_ms", System.currentTimeMillis())
+                            .build();
 
-            this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
-            COUNTER.incrementAndGet();
+                    this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
+                    COUNTER.incrementAndGet();
 
-        }
+                })
+                .then()
+                .doOnTerminate(countDownLatch::countDown);
+
+
     }
 }

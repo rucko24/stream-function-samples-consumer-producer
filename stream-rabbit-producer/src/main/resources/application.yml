@@ -32,4 +32,4 @@ app:
     max-core-pool-size: 3
     replicas-or-instances: 1
     configFile: 100
-    messageFile: XXL
+    messageFile: XL

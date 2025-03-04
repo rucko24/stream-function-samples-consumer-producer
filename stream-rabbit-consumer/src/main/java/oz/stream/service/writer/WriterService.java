@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
@@ -56,8 +55,10 @@ public class WriterService {
     private void writeLine(BufferedWriter writer, long latency) throws IOException {
 
         final String line = FORMATER.format(LocalTime.now()) + ";" + latency;
-        writer.write(line);
-        writer.newLine();
+        System.out.println(line);
+        //writer.write(line);
+        //writer.newLine();
+        //writer.flush();
 
     }
 

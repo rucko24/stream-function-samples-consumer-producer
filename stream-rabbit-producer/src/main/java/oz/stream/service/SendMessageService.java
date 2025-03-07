@@ -24,7 +24,6 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import oz.stream.config.AppConfiguration;
-
 import oz.stream.model.DocValuesList;
 import oz.stream.model.MessageDto;
 
@@ -59,7 +58,10 @@ public class SendMessageService {
     public void producer(String input) {
 
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
+
         final var message = this.readFileService.getMessage();
+        MessageDto messageDto = new MessageDto();
+        messageDto.setMessage(message);
 
         final long totalMessages = getTotalMessages(docValueList);
 
@@ -80,7 +82,7 @@ public class SendMessageService {
             // Si hay resto, algunos threads envían un mensaje extra
             final long messagesForThisThread = messagesPerThread + (index < remainder ? 1 : 0);
             threadPoolTaskExecutor.execute(() -> {
-                this.sendMessage(globalDelayPerMessage, messagesForThisThread, message);
+                this.sendMessage(globalDelayPerMessage, messagesForThisThread, messageDto);
                 countDownLatch.countDown();
             });
         }
@@ -111,10 +113,9 @@ public class SendMessageService {
         return globalDelayPerMsg;
     }
 
-    private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess, String messagePayload) {
+    private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess, MessageDto messagePayload) {
         log.info("Iniciando envío de {} mensajes con un delay de {} ms", totalDocCountToProcess, TimeUnit.NANOSECONDS.toMillis(globalDelayPerMessage));
-        MessageDto messageDto = new MessageDto();
-        messageDto.setMessage(messagePayload);
+
 
         for (int index = 0; index < totalDocCountToProcess; index++) {
             // Intentamos obtener el siguiente slot de tiempo disponible
@@ -130,7 +131,7 @@ public class SendMessageService {
             while (System.nanoTime() < nextSlot) {
                 Thread.onSpinWait();
             }
-            Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
+            Message<MessageDto> messageToSend = MessageBuilder.withPayload(messagePayload)
                     .setHeader("timestamp_ms", System.currentTimeMillis())
                     .build();
 

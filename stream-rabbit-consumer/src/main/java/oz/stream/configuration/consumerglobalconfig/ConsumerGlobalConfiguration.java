@@ -8,20 +8,30 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
+import javax.annotation.PostConstruct;
+
 @Log4j2
 @Data
 @Configuration
-@PropertySource(value = "file:/home/rubn/global-configuration.yml", factory = ConsumerGlobalConfigPropertySourceFactory.class)
-@ConfigurationProperties(prefix = "global-config.consumer")
+@PropertySource(value = "file:./global-configuration.yml", factory = ConsumerGlobalConfigPropertySourceFactory.class)
+@ConfigurationProperties(prefix = "consumer")
 public class ConsumerGlobalConfiguration {
     // Definición de propiedades, getters y setters
-    private Integer corePoolSize;
+    private Integer concurrency;
+
+    @PostConstruct
+    public void setup() {
+        System.setProperty("spring.cloud.stream.bindings.consumer-in-0.destination", "performance-queue");
+        System.setProperty("spring.cloud.stream.bindings.consumer-in-0.group", "my-consumer-group");
+        System.setProperty("spring.cloud.stream.bindings.consumer-in-0.consumer.concurrency", String.valueOf(concurrency));
+    }
 
     @Bean
     public CommandLineRunner runner(){
         return args -> {
-            log.info("core pool size {}", corePoolSize);
+            log.info("core pool size {}", concurrency);
         };
     }
+
 
 }

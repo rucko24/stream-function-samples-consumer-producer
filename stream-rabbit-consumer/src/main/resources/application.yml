@@ -6,11 +6,11 @@ spring:
       definition: consumer
     stream:
       default-binder: rabbit
-      rabbit:
-        bindings:
-          consumer-in-0:
-            consumer:
-              prefetch: 1
+      #rabbit:
+      #  bindings:
+      #    consumer-in-0:
+      #      consumer:
+      #        prefetch: 1
       binders:
         rabbit:
           type: rabbit
@@ -26,7 +26,7 @@ spring:
           destination: performance-queue
           group: my-consumer-group
           consumer:
-            concurrency: 14 # Número de consumidores concurrentes
+            concurrency: 13 # Número de consumidores concurrentes
             prefetch: 1
 
 logging:

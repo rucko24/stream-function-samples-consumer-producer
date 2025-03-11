@@ -10,14 +10,14 @@ import org.springframework.context.annotation.PropertySource;
 
 @Log4j2
 @Data
-@Configuration
-@PropertySource(value = "file:/home/rubn/global-configuration.yml", factory = ProducerGlobalConfigPropertySourceFactory.class)
-@ConfigurationProperties(prefix = "global-config.producer")
+//@Configuration
+//@PropertySource(value = "file:/home/rubn/global-configuration.yml", factory = ProducerGlobalConfigPropertySourceFactory.class)
+//@ConfigurationProperties(prefix = "global-config.producer")
 public class ProducerGlobalConfiguration {
     // Definición de propiedades, getters y setters
     private Integer corePoolSize;
 
-    @Bean
+//    @Bean
     public CommandLineRunner runner(){
         return args -> {
             log.info("core pool size {}", corePoolSize);

@@ -24,6 +24,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class RabbitConsumerDemo {
 
+
+
     public static void main(String[] args) {
         SpringApplication.run(RabbitConsumerDemo.class, args);
     }

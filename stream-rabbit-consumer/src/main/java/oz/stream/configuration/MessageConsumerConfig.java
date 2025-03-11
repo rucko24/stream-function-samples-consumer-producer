@@ -5,6 +5,8 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.messaging.Message;
 import oz.stream.model.MessageDto;
 import oz.stream.service.writer.WriterService;
@@ -39,6 +41,7 @@ public class MessageConsumerConfig {
     }
 
     @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
     public CommandLineRunner schedulerWriter() {
         log.info("Scheduler writer started");
         return (noOps) -> {
@@ -51,7 +54,7 @@ public class MessageConsumerConfig {
                     log.info("Scheduler writer isCancelled ? {}", this.scheduledFuture.isCancelled());
                 }
 
-            }, 0, 12, TimeUnit.MINUTES);
+            }, 0, 4, TimeUnit.MINUTES);
         };
     }
 

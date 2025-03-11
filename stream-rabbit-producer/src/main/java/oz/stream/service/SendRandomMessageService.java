@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class SendMessageService {
+public class SendRandomMessageService {
 
     public static final String PERFORMANCE_QUEUE = "performance-queue";
     private final StreamBridge streamBridge;
@@ -66,9 +66,7 @@ public class SendMessageService {
 
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
 
-        final var message = this.readFileService.getMessage();
-        MessageDto messageDto = new MessageDto();
-        messageDto.setMessage(message);
+        final var messageDto = this.getMessage();
 
         final long totalMessages = this.getTotalMessages(docValueList);
 

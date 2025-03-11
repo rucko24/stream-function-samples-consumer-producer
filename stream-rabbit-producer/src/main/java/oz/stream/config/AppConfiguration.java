@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 public class AppConfiguration {
 
     private Integer corePoolSize;
-    private Integer maxCorePoolSize;
     private Integer replicasOrInstances;
     private String configFile;
     private String messageFile;

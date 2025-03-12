@@ -6,5 +6,5 @@ producer:
  
 #==== Consumer
 consumer:
-  concurrency: 13
+  concurrency: 15
 #====	   

@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Configuration
 public class SpringAsyncConfig {
 
-    private AtomicInteger THREAD_COUNTER = new AtomicInteger();
+    private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
     @Bean
     public ScheduledExecutorService scheduledExecutorService(AppConfiguration configuration) {

@@ -31,4 +31,4 @@ app:
     core-pool-size: 3
     replicas-or-instances: 1
     configFile: 100
-    messageFile: XL
+    messageFile: L

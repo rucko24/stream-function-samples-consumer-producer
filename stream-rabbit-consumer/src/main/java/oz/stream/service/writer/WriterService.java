@@ -5,6 +5,8 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
@@ -21,12 +23,13 @@ import java.util.concurrent.locks.StampedLock;
 @RequiredArgsConstructor
 public class WriterService {
 
-    private static final DateTimeFormatter FORMATER = DateTimeFormatter.ofPattern("HH:mm");
+    public static final DateTimeFormatter FORMATER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter FORMATER_FILE_NAME = DateTimeFormatter.ofPattern("HH_mm_ss_SSSSS");
     private static final Path OUTPUT = Path.of("/home/rubn/logs/logs-" + FORMATER_FILE_NAME.format(LocalTime.now()) + ".txt");
     private static final StampedLock STAMPED_LOCK = new StampedLock();
 
     @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     public CommandLineRunner createFile() {
         return args -> {
             try (final BufferedWriter writer = Files.newBufferedWriter(OUTPUT, StandardOpenOption.CREATE)) {
@@ -45,6 +48,18 @@ public class WriterService {
         try (final BufferedWriter writer = Files.newBufferedWriter(OUTPUT, StandardOpenOption.APPEND)) {
 
             this.writeLine(writer, latency);
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+    }
+
+    public void writer(String latency) {
+
+        try (final BufferedWriter writer = Files.newBufferedWriter(OUTPUT, StandardOpenOption.APPEND)) {
+
+            writer.write(latency);
 
         } catch (IOException ex) {
             ex.printStackTrace();

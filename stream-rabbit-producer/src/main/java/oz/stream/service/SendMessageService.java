@@ -18,11 +18,9 @@ package oz.stream.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Indexed;
 import org.springframework.transaction.annotation.Transactional;
 import oz.stream.config.AppConfiguration;
 import oz.stream.model.DocValuesList;
@@ -30,7 +28,6 @@ import oz.stream.model.MessageDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,6 +36,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * @author Oleg Zhurakousky, @rucko24
@@ -57,21 +55,15 @@ public class SendMessageService {
     private static final AtomicLong COUNTER = new AtomicLong();
     private final ResponseTimeService responseTimeService = new ResponseTimeService();
 
-    // Utilizamos un AtomicLong para trackear el último tiempo de envío global
-    private final AtomicLong lastGlobalSendTime = new AtomicLong(0);
-
     @Transactional
     public void producer(String input) {
 
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
-        final var message = this.readFileService.getMessage();
+        final String message = this.readFileService.getMessage();
 
         final long totalMessages = getTotalMessages(docValueList);
 
         final long globalDelayPerMessage = this.globalDelayPerMessage(docValueList, totalMessages);
-
-        // Inicializamos el tiempo de inicio
-        lastGlobalSendTime.set(System.nanoTime());
 
         // Número de threads deseado (puedes obtenerlo de una configuración)
         final int numThreads = appConfiguration.getCorePoolSize(); // Ejemplo: 5
@@ -109,7 +101,7 @@ public class SendMessageService {
         final int totalDocCountEnMinutos = 60 * docValueList.size();
         final double targetGlobalRate = (double) totalDocuments / totalDocCountEnMinutos;
         final double targetRatePerThread = targetGlobalRate / this.appConfiguration.getCorePoolSize();
-        final long globalDelayPerMsg = Math.round(1000.0 / targetGlobalRate * 1_000_000); // en nanosegundos
+        final long globalDelayPerMsg = Math.round(1000.0 / targetRatePerThread); // en millis
         var formatTargetRatePerThread = BigDecimal.valueOf(targetRatePerThread).setScale(2, RoundingMode.HALF_EVEN);
         log.info("Configuración Target Rate Global: [{}] msg/s, Target Rate Per Thread: [{}] msg/s, Delay between msg: [{}] ns", targetGlobalRate, formatTargetRatePerThread, globalDelayPerMsg);
         return globalDelayPerMsg;
@@ -122,21 +114,24 @@ public class SendMessageService {
         messageDto.setMessage(messagePayload);
 
         return Flux.range(0, (int) totalDocCountToProcess)
-                .delayElements(Duration.ofNanos(globalDelayPerMessage))
+                .delayElements(Duration.ofMillis(globalDelayPerMessage))
                 .publishOn(this.scheduler)
-                .doOnNext(onNext -> {
-
-                    Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
-                            .setHeader("timestamp_ms", System.currentTimeMillis())
-                            .build();
-
-                    this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
-                    COUNTER.incrementAndGet();
-
-                })
+                .doOnNext(getTimestampMs(messageDto))
                 .then()
                 .doOnTerminate(countDownLatch::countDown);
 
+    }
 
+    private Consumer<Integer> getTimestampMs(MessageDto messageDto) {
+        return onNext -> {
+
+            Message<MessageDto> messageToSend = MessageBuilder.withPayload(messageDto)
+                    .setHeader("timestamp_ms", System.currentTimeMillis())
+                    .build();
+
+            this.streamBridge.send(PERFORMANCE_QUEUE, messageToSend);
+            COUNTER.incrementAndGet();
+
+        };
     }
 }

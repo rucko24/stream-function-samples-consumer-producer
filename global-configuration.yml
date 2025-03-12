@@ -1,0 +1,10 @@
+#=== Producer
+producer:
+  enable-random-messages: false
+  core-pool-Size: 5
+#====
+ 
+#==== Consumer
+consumer:
+  concurrency: 15
+#====	   

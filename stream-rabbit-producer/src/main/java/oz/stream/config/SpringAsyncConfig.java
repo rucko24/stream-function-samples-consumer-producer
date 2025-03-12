@@ -13,7 +13,6 @@ public class SpringAsyncConfig {
     public Scheduler scheduler(AppConfiguration configuration) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(configuration.getCorePoolSize());  // Minimum number of threads in the pool
-        executor.setMaxPoolSize(configuration.getMaxCorePoolSize());  // Maximum number of threads in the pool
         executor.setThreadNamePrefix("RabbitProducerTaskExecutor-");  // Prefix for thread names
         executor.initialize();  // Initializes the thread pool
         return Schedulers.fromExecutor(executor);

@@ -1,6 +1,9 @@
+spring:
+  profiles:
+    active: LOCAL
 #=== Producer
 producer:
-  enable-random-messages: false
+  enable-random-messages: true
   core-pool-Size: 5
 #====
  

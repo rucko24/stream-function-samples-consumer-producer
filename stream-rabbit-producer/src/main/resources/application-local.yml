@@ -1,0 +1,34 @@
+server:
+  port: 8084
+  tomcat:
+    max-threads: 1 # Maximum amount of worker threads.
+spring:
+  cloud:
+    function:
+      definition: producer
+    stream:
+      default-binder: rabbit
+      binders:
+        rabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: 192.168.1.27
+                port: 5672
+                username: rubn
+                password: password
+      bindings:
+        producer-in-0: # Canal de entrada (Consumidor)
+          destination: performance-queue
+
+logging:
+  level:
+    org.springframework.cloud.function.context.catalog.BeanFactoryAwareFunctionRegistry: OFF
+
+app:
+  core:
+    core-pool-size: 3
+    replicas-or-instances: 1
+    configFile: 100
+    messageFile: L

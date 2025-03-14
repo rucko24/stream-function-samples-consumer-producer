@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "app.core")
+@ConfigurationProperties(prefix = "producer")
 public class AppConfiguration {
 
     private Integer corePoolSize;

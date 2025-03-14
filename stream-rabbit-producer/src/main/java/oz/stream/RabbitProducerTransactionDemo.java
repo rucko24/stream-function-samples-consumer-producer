@@ -15,11 +15,9 @@
  */
 package oz.stream;
 
-import org.springframework.boot.CommandLineRunner;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import oz.stream.service.SendMessageService;
 
 /**
  * @author Oleg Zhurakousky
@@ -31,11 +29,5 @@ public class RabbitProducerTransactionDemo {
         SpringApplication.run(RabbitProducerTransactionDemo.class, args);
     }
 
-    @Bean
-    public CommandLineRunner run(SendMessageService sendMessageService) {
-        return (args) -> {
-            sendMessageService.producer("Enviando mensaje de prueba");
-        };
-    }
 
 }

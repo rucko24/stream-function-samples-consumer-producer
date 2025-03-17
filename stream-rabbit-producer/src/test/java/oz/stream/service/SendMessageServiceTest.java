@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -14,6 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 //@ExtendWith(MockitoExtension.class)
 @Log4j2
@@ -91,7 +94,7 @@ class SendMessageServiceTest {
         final var countDownLatch = new CountDownLatch(3);
 
         Flux.range(0, 3)
-                //.subscribeOn(this.scheduler())
+                .publishOn(this.scheduler())
                 .flatMap(mapper -> Flux.range(0, 10)
                         .delayElements(Duration.ofMillis(33))
                         .publishOn(this.scheduler())
@@ -107,6 +110,28 @@ class SendMessageServiceTest {
         countDownLatch.await();
 
         log.info("Total message: {}", counter.get());
+
+    }
+
+    @Test
+    @SneakyThrows
+    @DisplayName("Emitting 30 items in total")
+    void reactiveMessageSenderStepVerifier() {
+
+        final var counter = new AtomicInteger(0);
+
+        StepVerifier.create(Flux.range(0, 3)
+                .publishOn(this.scheduler())
+                .flatMap(mapper -> Flux.range(0, 10)
+                        .delayElements(Duration.ofMillis(33))
+                        .publishOn(this.scheduler())
+                        .doOnNext(onNext -> {
+                            counter.incrementAndGet();
+                            log.info("Send message {}", "ABC");
+                        })
+                ))
+                .expectNextCount(30)
+                .verifyComplete();
 
     }
 

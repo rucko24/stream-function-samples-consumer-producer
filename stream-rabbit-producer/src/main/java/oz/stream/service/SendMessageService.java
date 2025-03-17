@@ -116,7 +116,7 @@ public class SendMessageService {
         return Flux.range(0, (int) totalDocCountToProcess)
                 .delayElements(Duration.ofMillis(globalDelayPerMessage))
                 .publishOn(this.scheduler)
-                .doOnNext(getTimestampMs(messageDto))
+                .doOnNext(this.getTimestampMs(messageDto))
                 .then()
                 .doOnTerminate(countDownLatch::countDown);
 

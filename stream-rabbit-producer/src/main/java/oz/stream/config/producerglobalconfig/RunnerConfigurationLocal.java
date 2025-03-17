@@ -1,40 +1,33 @@
-package oz.stream.config;
+package oz.stream.config.producerglobalconfig;
 
-import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
-import oz.stream.config.producerglobalconfig.ProducerGlobalConfigPropertySourceFactory;
 import oz.stream.service.SendMessageService;
 import oz.stream.service.SendRandomMessageService;
 
-@Data
 @Log4j2
-@Profile("!LOCAL")
 @Configuration
-@PropertySource(value = "file:/home/rubn/global-configuration-dev.yml", factory = ProducerGlobalConfigPropertySourceFactory.class)
-public class RunnerConfigurationInt {
+@PropertySource(value = "file:./global-configuration.yml", factory = ProducerGlobalConfigPropertySourceFactory.class)
+public class RunnerConfigurationLocal {
 
-    private Integer corePoolSize;
-
-    @Bean
+    @Bean(name = "runMessages")
     @ConditionalOnProperty(name = "producer.enable-random-messages", havingValue = "false")
-    public CommandLineRunner intRunMessages(SendMessageService sendMessageService) {
+    public CommandLineRunner runMessages(SendMessageService sendMessageService) {
         return (args) -> {
-            log.info("Int Random messages enabled: false corePoolSize {}", corePoolSize);
+            log.info("Local Random messages enabled: false");
             sendMessageService.producer("Enviando mensaje de prueba");
         };
     }
 
-    @Bean
+    @Bean(name = "runRandomMessages")
     @ConditionalOnProperty(name = "producer.enable-random-messages", havingValue = "true")
-    public CommandLineRunner intRunRandomMessages(SendRandomMessageService sendRandomMessageService) {
+    public CommandLineRunner runRandomMessages(SendRandomMessageService sendRandomMessageService) {
         return (args) -> {
-            log.info("Int Random messages enabled: true corePoolSize {}", corePoolSize);
+            log.info("Local Random messages enabled: true");
             sendRandomMessageService.producer("Enviando mensaje de prueba");
         };
     }

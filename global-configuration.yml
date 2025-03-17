@@ -1,13 +1,39 @@
 spring:
   profiles:
     active: LOCAL
+  cloud:
+    function:
+      definition: producer
+    stream:
+      default-binder: rabbit
+      binders:
+        rabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: 192.168.1.27
+                port: 5672
+                username: rubn
+                password: password
+      bindings:
+        producer-in-0: # Canal de entrada (Consumidor)
+          destination: performance-queue
 #=== Producer
 producer:
   enable-random-messages: true
-  core-pool-Size: 5
+  message-range: 1000
+  core-pool-size: 3
+  replicas-or-instances: 1
+  configFile: 100
+  messageFile: L
 #====
  
 #==== Consumer
 consumer:
   concurrency: 15
+logging:
+  level:
+    org.springframework.integration.handler.support.MessagingMethodInvokerHelper: OFF
+    org.springframework.cloud.function.context.catalog.BeanFactoryAwareFunctionRegistry: OFF
 #====	   

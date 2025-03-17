@@ -13,6 +13,7 @@ public class AppConfiguration {
     private Integer replicasOrInstances;
     private String configFile;
     private String messageFile;
+    private String messageRange;
 
     public String getConfigFile() {
         return "/configuration_" + configFile + ".json";

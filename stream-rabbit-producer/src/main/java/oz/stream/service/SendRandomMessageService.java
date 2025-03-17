@@ -47,6 +47,7 @@ public class SendRandomMessageService {
     private final TaskExecutor threadPoolTaskExecutor;
     private final AppConfiguration appConfiguration;
     private final ReadFileService readFileService;
+    private final RandomMessageGeneratorService randomMessageGeneratorService;
 
     private static final AtomicLong COUNTER = new AtomicLong();
     private final ResponseTimeService responseTimeService = new ResponseTimeService();
@@ -54,8 +55,8 @@ public class SendRandomMessageService {
     // Utilizamos un AtomicLong para trackear el último tiempo de envío global
     private final AtomicLong lastGlobalSendTime = new AtomicLong(0);
 
-    private MessageDto getMessage() {
-        final String message = this.readFileService.getMessage();
+    private MessageDto getRandomMessage() {
+        final String message = this.randomMessageGeneratorService.getMessage(appConfiguration.getMessageRange());
         MessageDto messageDto = new MessageDto();
         messageDto.setMessage(message);
         return messageDto;
@@ -65,8 +66,6 @@ public class SendRandomMessageService {
     public void producer(String input) {
 
         final List<DocValuesList> docValueList = this.readFileService.getConfigurationMessage().getDocValuesListList();
-
-        final var messageDto = this.getMessage();
 
         final long totalMessages = this.getTotalMessages(docValueList);
 
@@ -87,7 +86,7 @@ public class SendRandomMessageService {
             // Si hay resto, algunos threads envían un mensaje extra
             final long messagesForThisThread = messagesPerThread + (index < remainder ? 1 : 0);
             threadPoolTaskExecutor.execute(() -> {
-                this.sendMessage(globalDelayPerMessage, messagesForThisThread, messageDto);
+                this.sendMessage(globalDelayPerMessage, messagesForThisThread);
                 countDownLatch.countDown();
             });
         }
@@ -118,7 +117,7 @@ public class SendRandomMessageService {
         return globalDelayPerMsg;
     }
 
-    private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess, MessageDto messagePayload) {
+    private void sendMessage(final long globalDelayPerMessage, final long totalDocCountToProcess) {
         log.info("Iniciando envío de {} mensajes con un delay de {} ms", totalDocCountToProcess, TimeUnit.NANOSECONDS.toMillis(globalDelayPerMessage));
 
         for (int index = 0; index < totalDocCountToProcess; index++) {
@@ -135,6 +134,9 @@ public class SendRandomMessageService {
             while (System.nanoTime() < nextSlot) {
                 Thread.onSpinWait();
             }
+
+            var messagePayload = this.getRandomMessage();
+
             Message<MessageDto> messageToSend = MessageBuilder.withPayload(messagePayload)
                     .setHeader("timestamp_ms", System.currentTimeMillis())
                     .build();
